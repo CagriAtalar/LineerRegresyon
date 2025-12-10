@@ -1,0 +1,2 @@
+# LineerRegresyon
+LineerRegresyon python script
