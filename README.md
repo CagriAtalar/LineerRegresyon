@@ -2,7 +2,7 @@
 
 ## Genel Bakis
 
-Bu program, lineer regresyon analizini analitik (OLS) ve iteratif (Gradient Descent) yontemlerle gerceklestiren, sonuclari istatistiksel metriklerle birlikte gorsellestiren bir Python uygulamasidir.
+Bu program, klasik/basit lineer regresyon analizini En Kucuk Kareler (OLS) yontemiyle gerceklestiren, sonuclari istatistiksel metriklerle birlikte gorsellestiren bir Python uygulamasidir.
 
 **Temel Denklem:** Y = a*X + b
 - a: Egim (slope)
@@ -105,75 +105,9 @@ RMSE = √(MSE)
 
 ---
 
-## 2. GRADIENT DESCENT OPTIMIZASYONU
+## 2. GUI FONKSIYONLARI ve VERI AKISI
 
-### 2.1 class GradientDescentOptimizer
-
-**Konum:** Satir 132-234
-
-**Amac:** Kapalı form çözümü yerine, türev kullanarak maliyet fonksiyonunu iteratif olarak minimize etmek.
-
-**Matematiksel Teori:**
-
-Maliyet Fonksiyonu (Mean Squared Error):
-```
-J(a,b) = (1/n) * Σ(yi - (a*xi + b))²
-```
-
-Parcali Turevler (Gradyanlar):
-```
-∂J/∂a = (2/n) * Σ((a*xi + b - yi) * xi)
-∂J/∂b = (2/n) * Σ(a*xi + b - yi)
-```
-
-Parametre Guncelleme:
-```
-a_yeni = a_eski - α * (∂J/∂a)
-b_yeni = b_eski - α * (∂J/∂b)
-
-α = learning rate (ogrenme hizi)
-```
-
----
-
-### 2.2 Sinif Metodlari
-
-#### initialize_parameters(self)
-**Konum:** Satir 163-165
-- Rastgele baslangic parametreleri atar
-- Normal dagilimdan ornekleme yapar
-
-#### predict(self, X)
-**Konum:** Satir 167-169
-- Dogrusal tahmin: y = a*X + b
-- Mevcut parametrelerle cikti uretir
-
-#### calculate_cost(self, y_true, y_pred)
-**Konum:** Satir 171-178
-- Maliyet fonksiyonu J(a,b) hesaplar
-- MSE (Mean Squared Error) doner
-
-#### calculate_gradients(self, X, y_true, y_pred)
-**Konum:** Satir 180-193
-- Kısmi turevi hesaplar: ∂J/∂a ve ∂J/∂b
-- Gradyan vektorunu doner
-
-#### update_parameters(self, gradient_a, gradient_b)
-**Konum:** Satir 195-203
-- Parametreleri gradient ters yonunde gunceller
-- Gradyan inisi adimi uygular
-
-#### fit(self, X, y)
-**Konum:** Satir 205-234
-- Tam algoritmayi calistirir
-- Her iterasyonda: tahmin → maliyet → gradient → guncelleme
-- max_iterations kadar tekrar eder
-
----
-
-## 3. GUI FONKSIYONLARI ve VERI AKISI
-
-### 3.1 TAB 1: OLS Analizi
+### 2.1 TAB 1: OLS Analizi
 
 #### create_tab1_ols_analysis(self)
 **Konum:** Satir 251-335
@@ -238,7 +172,7 @@ P-value < 0.05 ise parametre anlamli
 
 ---
 
-### 3.2 TAB 2: Interaktif Alan
+### 2.2 TAB 2: Interaktif Alan
 
 #### create_tab2_interactive(self)
 **Konum:** Satir 564-665
@@ -274,26 +208,9 @@ P-value < 0.05 ise parametre anlamli
 - interactive_model uzerinden istatistik tablosu olusturur
 - P-value ve ANOVA sonuclarini gosterir
 
-#### start_interactive_gradient_descent(self)
-**Konum:** Satir 1027-1164
-
-**Normalizasyon:**
-Gradient Descent'in duzgun calismasi icin veriler normalize edilir:
-```
-X_norm = (X - μx) / σx
-y_norm = (y - μy) / σy
-```
-
-**Animasyon:**
-Her frame'de:
-1. Tahmin: y_pred = θ₀ + θ₁*X_norm
-2. Maliyet: MSE = (1/n)Σ(y_norm - y_pred)²
-3. Gradient: ∂J/∂θ₀, ∂J/∂θ₁
-4. Guncelleme: θ = θ - α*∇J
-
 ---
 
-### 3.3 TAB 3: CSV Dosyasi Analizi
+### 2.3 TAB 3: CSV Dosyasi Analizi
 
 #### create_tab3_csv_analysis(self)
 **Konum:** Satir 1069-1178
@@ -346,16 +263,11 @@ PersonID,Sutun1,Sutun2
 - Residual histogram ve scatter plot
 - CSV verileri icin hata analizi
 
-#### start_csv_gradient_descent(self)
-**Konum:** Satir 1502-1639
-- CSV verilerine Gradient Descent animasyonu
-- Normalize edilmis veri uzerinde optimizasyon
-
 ---
 
-## 4. MATEMATIKSEL ISLEMLER ve KONUMLARI
+## 3. MATEMATIKSEL ISLEMLER ve KONUMLARI
 
-### 4.1 OLS Hesaplamalari
+### 3.1 OLS Hesaplamalari
 
 **Matris Islemi (Statsmodels icinde):**
 ```python
@@ -373,7 +285,7 @@ model = sm.OLS(y, X_with_const).fit()
 
 ---
 
-### 4.2 R² Hesaplama
+### 3.2 R² Hesaplama
 
 **Konum:** calculate_performance_metrics(), Satir 110-123
 
@@ -394,7 +306,7 @@ r_squared = 1 - (ss_residual / ss_total)
 
 ---
 
-### 4.3 RMSE Hesaplama
+### 3.3 RMSE Hesaplama
 
 **Konum:** calculate_performance_metrics(), Satir 125-129
 
@@ -411,98 +323,9 @@ rmse = np.sqrt(mse)
 
 ---
 
-### 4.4 Gradient Descent - Maliyet Fonksiyonu
+## 4. ISTATISTIKSEL TESTLER
 
-**Konum:** GradientDescentOptimizer.calculate_cost(), Satir 171-178
-
-**Formul:**
-```
-J(θ) = (1/n) * Σ(ŷi - yi)²
-
-Burada:
-ŷi = a*xi + b (tahmin)
-θ = [a, b] (parametreler)
-```
-
-**Kod:**
-```python
-n = len(y_true)
-cost = (1/n) * np.sum((y_pred - y_true) ** 2)
-```
-
----
-
-### 4.5 Gradient Descent - Gradyan Hesaplama
-
-**Konum:** GradientDescentOptimizer.calculate_gradients(), Satir 180-193
-
-**Kismi Turevler:**
-```
-∂J/∂a = (2/n) * Σ((a*xi + b - yi) * xi)
-∂J/∂b = (2/n) * Σ(a*xi + b - yi)
-```
-
-**Kod:**
-```python
-n = len(y_true)
-error = y_pred - y_true
-
-gradient_a = (2/n) * np.sum(error * X)
-gradient_b = (2/n) * np.sum(error)
-```
-
----
-
-### 4.6 Gradient Descent - Parametre Guncelleme
-
-**Konum:** GradientDescentOptimizer.update_parameters(), Satir 195-203
-
-**Gradyan Inisi Formulu:**
-```
-θnew = θold - α * ∇J(θ)
-
-Burada:
-α = learning rate (ogrenme hizi)
-∇J(θ) = gradient vektoru
-```
-
-**Kod:**
-```python
-self.a = self.a - self.learning_rate * gradient_a
-self.b = self.b - self.learning_rate * gradient_b
-```
-
----
-
-### 4.7 Veri Normalizasyonu
-
-**Konum:** Gradient Descent animasyonlarinda (Satir 1102-1113, 1644-1655)
-
-**Neden Gerekli:**
-- Farkli olceklerdeki degiskenler icin optimizasyon stabilitesi
-- Learning rate secimini kolaylastirir
-- Daha hizli yakinsama
-
-**Formul:**
-```
-X_norm = (X - μx) / σx
-y_norm = (y - μy) / σy
-
-μ = ortalama
-σ = standart sapma
-```
-
-**Denormalizasyon:**
-```
-a_real = a_norm * (σy / σx)
-b_real = μy - a_real*μx + b_norm*σy
-```
-
----
-
-## 5. ISTATISTIKSEL TESTLER
-
-### 5.1 ANOVA F-Testi
+### 4.1 ANOVA F-Testi
 
 **Konum:** model.fvalue, model.f_pvalue (Statsmodels sonucu)
 
@@ -531,7 +354,7 @@ dfe = hata serbestlik derecesi (n-2)
 
 ---
 
-### 5.2 Parametre t-Testi
+### 4.2 Parametre t-Testi
 
 **Konum:** model.tvalues, model.pvalues
 
@@ -556,7 +379,7 @@ H1: βi ≠ 0 (parametre anlamli)
 
 ---
 
-### 5.3 Guven Araligi
+### 4.3 Guven Araligi
 
 **Konum:** model.conf_int()
 
@@ -573,9 +396,9 @@ Parametrenin gercek degerinin %95 olasilikla bu aralikta olduguna inaniyoruz.
 
 ---
 
-## 6. RESIDUAL (ARTIK) ANALIZI
+## 5. RESIDUAL (ARTIK) ANALIZI
 
-### 6.1 Residual Hesaplama
+### 5.1 Residual Hesaplama
 
 **Formuler Her Yerde Ayni:**
 ```python
@@ -589,7 +412,7 @@ residuals = y_true - y_predicted
 
 ---
 
-### 6.2 Residual Diagnostics
+### 5.2 Residual Diagnostics
 
 **Ideal Ozellikler:**
 1. Sifir ortalama: E[ε] = 0
@@ -602,41 +425,9 @@ residuals = y_true - y_predicted
 - **Scatter Plot:** Heteroskedasticity ve pattern kontrolu
 - **Sifir cizgisi:** Sistematik hata kontrolu
 
-
-
-
-## 8. GRADIENT DESCENT ANIMASYON DETAYLARI
-
-### Animasyon Fonksiyonlari
-
-**Interaktif Alan:**
-- `start_interactive_gradient_descent()` - Satir 1027-1164
-- `update_frame()` (ic fonksiyon) - Satir 1135-1162
-
-**CSV Analizi:**
-- `start_csv_gradient_descent()` - Satir 1502-1639
-- `update_frame()` (ic fonksiyon) - Satir 1610-1637
-
-### Animasyonda Gosterilen Bilgiler:
-
-1. **Maliyet (MSE):** Her iterasyonda guncellenir
-2. **Iterasyon Sayaci:** frame / max_iter
-3. **Parametreler (a, b):** Denormalize edilmis gercek degerler
-4. **Regresyon Dogrusu:** Kirmizi cizgi, her frame'de hareket eder
-5. **Residual Cizgileri:** Her 10 iterasyonda gosterilir (gri cizgiler)
-
-### Animasyon Parametreleri:
-- **learning_rate:** 0.1
-- **max_iter:** 150
-- **interval:** 50ms (saniyede 20 frame)
-
 ---
 
-
-
-
-
-## 10. ONEMLI NOTLAR
+## 6. ONEMLI NOTLAR
 
 ### Model Varsayimlari:
 1. **Dogrusallik:** X ve Y arasi iliski dogrusal olmali
@@ -658,7 +449,7 @@ residuals = y_true - y_predicted
 
 ---
 
-## 11. KURULUM
+## 7. KURULUM
 
 ### Gerekli Kutuphaneler:
 ```bash
@@ -666,11 +457,11 @@ pip install numpy pandas matplotlib statsmodels scikit-learn scipy
 ```
 
 
-## 14. REFERANSLAR
+## 8. REFERANSLAR
 
 ### Matematiksel Temel:
 - Ordinary Least Squares (OLS) yontemi
-- Gradient Descent optimizasyonu
 - ANOVA (Analysis of Variance)
 - Hipotez testleri (t-test, F-test)
+- Residual analizi
 

@@ -3,10 +3,10 @@
 LİNEER REGRESYON ANALİZ PROGRAMI
 ==============================================
 
-Bu program üç temel algoritmayı içerir:
+Bu program klasik/basit lineer regresyon analizini içerir:
 1. En Küçük Kareler Yöntemi (Ordinary Least Squares - OLS)
-2. Gradient Descent Optimizasyonu
-3. İstatistiksel Analiz (P-value, ANOVA)
+2. İstatistiksel Analiz (P-value, ANOVA, R², RMSE)
+3. Hata Analizi (Residuals)
 
 Matematiksel Temel:
 Lineer Regresyon Denklemi: Y = a*X + b
@@ -25,7 +25,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import statsmodels.api as sm
 from sklearn.metrics import mean_squared_error, r2_score
-from matplotlib.animation import FuncAnimation
 from scipy import stats
 
 # Matplotlib tema ayarları - Sade ve net görünüm
@@ -117,106 +116,6 @@ def calculate_performance_metrics(y_true, y_predicted):
     return r_squared, rmse
 
 
-# ============================================================================
-# ALGORİTMA 3: GRADIENT DESCENT OPTİMİZASYONU
-# ============================================================================
-class GradientDescentOptimizer:
-    """
-    Gradient Descent (Gradyan İnişi) Algoritması
-    
-    Amaç: En iyi a ve b parametrelerini bulma
-    
-    Algoritma Adımları:
-    1. Rastgele başlangıç parametreleri seç (a₀, b₀)
-    2. Maliyet fonksiyonunu hesapla: J = (1/n) * Σ(y_pred - y_true)²
-    3. Gradyanları hesapla:
-       ∂J/∂a = (2/n) * Σ(error * X)
-       ∂J/∂b = (2/n) * Σ(error)
-    4. Parametreleri güncelle:
-       a = a - learning_rate * ∂J/∂a
-       b = b - learning_rate * ∂J/∂b
-    5. Adım 2-4'ü tekrarla (iterasyon sayısı kadar)
-    """
-    
-    def __init__(self, learning_rate=0.01, max_iterations=100):
-        """
-        Gradient Descent başlatıcı
-        
-        learning_rate: Öğrenme hızı (küçük = yavaş ama kararlı)
-        max_iterations: Maksimum iterasyon sayısı
-        """
-        self.learning_rate = learning_rate
-        self.max_iterations = max_iterations
-        self.a = None  # Eğim parametresi
-        self.b = None  # Kesişim parametresi
-        
-    def initialize_parameters(self):
-        """Adım 1: Rastgele parametrelerle başla"""
-        self.a = np.random.randn() * 0.5
-        self.b = np.random.randn() * 0.5
-        
-    def predict(self, X):
-        """Tahmin yap: y = a*X + b"""
-        return self.a * X + self.b
-        
-    def calculate_cost(self, y_true, y_pred):
-        """
-        Adım 2: Maliyet fonksiyonu (MSE)
-        J = (1/n) * Σ(y_pred - y_true)²
-        """
-        n = len(y_true)
-        cost = (1/n) * np.sum((y_pred - y_true) ** 2)
-        return cost
-        
-    def calculate_gradients(self, X, y_true, y_pred):
-        """
-        Adım 3: Gradyanları hesapla
-        
-        ∂J/∂a = (2/n) * Σ((y_pred - y_true) * X)
-        ∂J/∂b = (2/n) * Σ(y_pred - y_true)
-        """
-        n = len(y_true)
-        error = y_pred - y_true
-        
-        gradient_a = (2/n) * np.sum(error * X)
-        gradient_b = (2/n) * np.sum(error)
-        
-        return gradient_a, gradient_b
-        
-    def update_parameters(self, gradient_a, gradient_b):
-        """
-        Adım 4: Parametreleri güncelle
-        
-        a_new = a_old - learning_rate * ∂J/∂a
-        b_new = b_old - learning_rate * ∂J/∂b
-        """
-        self.a = self.a - self.learning_rate * gradient_a
-        self.b = self.b - self.learning_rate * gradient_b
-        
-    def fit(self, X, y):
-        """
-        Tam Gradient Descent algoritması
-        
-        Adım 5: Tüm adımları birleştir ve tekrarla
-        """
-        # Parametreleri başlat
-        self.initialize_parameters()
-        
-        # Her iterasyonda
-        for iteration in range(self.max_iterations):
-            # Tahmin yap
-            y_pred = self.predict(X)
-            
-            # Maliyet hesapla
-            cost = self.calculate_cost(y, y_pred)
-            
-            # Gradyanları hesapla
-            grad_a, grad_b = self.calculate_gradients(X, y, y_pred)
-            
-            # Parametreleri güncelle
-            self.update_parameters(grad_a, grad_b)
-            
-        return self.a, self.b
 
 
 # ============================================================================
@@ -611,13 +510,6 @@ class LinearRegressionApp:
                  font=('Arial', 13, 'bold'), bg='#4CAF50', fg='white',
                  padx=30, pady=15, cursor='hand2').pack(pady=10)
         
-        self.anim_btn = tk.Button(control_frame, text=" Gradient Descent", 
-                                  command=self.start_interactive_gradient_descent,
-                                  font=('Arial', 12, 'bold'), bg='white', fg='black',
-                                  padx=20, pady=15, cursor='hand2', relief='solid', bd=2,
-                                  state='disabled')
-        self.anim_btn.pack(pady=10)
-        
         self.inter_stats_btn = tk.Button(control_frame, text=" İstatistik Tablosu", 
                                          command=self.show_interactive_statistics,
                                          font=('Arial', 12, 'bold'), bg='white', fg='black',
@@ -675,11 +567,7 @@ class LinearRegressionApp:
         """İnteraktif noktalara OLS uygula"""
         if len(self.X_inter) < 2:
             self.inter_equation.config(text="En az 2 nokta gerekli!")
-            self.anim_btn.config(state='disabled')
             return
-        
-        # Butonları aktif et
-        self.anim_btn.config(state='normal')
         
         X = np.array(self.X_inter)
         y = np.array(self.y_inter)
@@ -741,7 +629,6 @@ class LinearRegressionApp:
         self.inter_equation.config(text="Denklem: -")
         self.inter_r2.config(text="R² = -")
         self.inter_points.config(text="Nokta Sayısı: 0")
-        self.anim_btn.config(state='disabled')
         self.inter_stats_btn.config(state='disabled')
         self.inter_error_btn.config(state='disabled')
         self.interactive_model = None
@@ -959,113 +846,6 @@ class LinearRegressionApp:
         
         canvas.draw()
     
-    def start_interactive_gradient_descent(self):
-        """İnteraktif noktalara Gradient Descent uygula"""
-        if len(self.X_inter) < 2:
-            return
-        
-        anim_window = Toplevel(self.root)
-        anim_window.title("🔄 Gradient Descent - İnteraktif Veriler")
-        anim_window.geometry("1000x700")
-        anim_window.configure(bg='white')
-        
-        tk.Label(anim_window, text=" GRADIENT DESCENT OPTİMİZASYONU", 
-                font=('Arial', 16, 'bold'), bg='white', fg='black', pady=15).pack()
-        
-        info_frame = tk.Frame(anim_window, bg='white', relief='solid', bd=2)
-        info_frame.pack(fill='x', padx=20, pady=10)
-        
-        cost_label = tk.Label(info_frame, text="Maliyet (MSE): Başlatılıyor...", 
-                             font=('Arial', 13, 'bold'), bg='white', fg='red')
-        cost_label.pack(side='left', padx=20, pady=10)
-        
-        iteration_label = tk.Label(info_frame, text="İterasyon: 0 / 150", 
-                                   font=('Arial', 13, 'bold'), bg='white', fg='blue')
-        iteration_label.pack(side='left', padx=20, pady=10)
-        
-        params_label = tk.Label(info_frame, text="Parametreler: a=?, b=?", 
-                               font=('Arial', 13, 'bold'), bg='white', fg='darkgreen')
-        params_label.pack(side='left', padx=20, pady=10)
-        
-        fig_anim = Figure(figsize=(10, 6), facecolor='white', dpi=100)
-        ax_anim = fig_anim.add_subplot(111)
-        canvas_anim = FigureCanvasTkAgg(fig_anim, anim_window)
-        canvas_anim.get_tk_widget().pack(fill='both', expand=True, padx=20, pady=20)
-        
-        X_data = np.array(self.X_inter)
-        y_data = np.array(self.y_inter)
-        
-        # Normalize et
-        X_mean, X_std = X_data.mean(), X_data.std()
-        y_mean, y_std = y_data.mean(), y_data.std()
-        
-        if X_std == 0: X_std = 1
-        if y_std == 0: y_std = 1
-        
-        X_norm = (X_data - X_mean) / X_std
-        y_norm = (y_data - y_mean) / y_std
-        
-        theta0 = np.random.randn() * 0.5
-        theta1 = np.random.randn() * 0.5
-        
-        learning_rate = 0.1
-        max_iter = 150
-        
-        ax_anim.scatter(X_norm, y_norm, c='blue', s=100, alpha=0.7, 
-                       edgecolors='black', linewidth=2, label='Veriler', zorder=5)
-        line, = ax_anim.plot([], [], 'r-', linewidth=3, label='Regresyon', alpha=0.8)
-        
-        ax_anim.set_xlabel('X (Normalize)', fontsize=13, fontweight='bold')
-        ax_anim.set_ylabel('Y (Normalize)', fontsize=13, fontweight='bold')
-        ax_anim.set_title('Gradient Descent Optimizasyonu', fontsize=15, fontweight='bold', pad=15)
-        ax_anim.legend(fontsize=12, loc='upper left')
-        ax_anim.grid(True, alpha=0.3, linestyle='--')
-        ax_anim.set_xlim(X_norm.min() - 0.5, X_norm.max() + 0.5)
-        ax_anim.set_ylim(y_norm.min() - 0.5, y_norm.max() + 0.5)
-        
-        state = {'theta0': theta0, 'theta1': theta1, 'iteration': 0}
-        
-        def update_frame(frame):
-            if frame >= max_iter:
-                return line,
-            
-            y_pred = state['theta0'] + state['theta1'] * X_norm
-            mse = np.mean((y_norm - y_pred) ** 2)
-            cost_label.config(text=f"Maliyet (MSE): {mse:.6f}")
-            
-            iteration_label.config(text=f"İterasyon: {frame + 1} / {max_iter}")
-            
-            a_real = state['theta1'] * (y_std / X_std)
-            b_real = y_mean - a_real * X_mean + state['theta0'] * y_std
-            params_label.config(text=f"Parametreler: a={a_real:.4f}, b={b_real:.4f}")
-            
-            n = len(X_norm)
-            error = y_pred - y_norm
-            d_theta0 = (2.0 / n) * np.sum(error)
-            d_theta1 = (2.0 / n) * np.sum(error * X_norm)
-            
-            state['theta0'] -= learning_rate * d_theta0
-            state['theta1'] -= learning_rate * d_theta1
-            
-            y_line = state['theta0'] + state['theta1'] * X_norm
-            line.set_data(X_norm, y_line)
-            
-            if frame % 10 == 0:
-                for artist in ax_anim.lines[1:]:
-                    artist.remove()
-                
-                for i in range(len(X_norm)):
-                    ax_anim.plot([X_norm[i], X_norm[i]], [y_norm[i], y_line[i]], 
-                               'gray', linewidth=1, alpha=0.3, zorder=1)
-            
-            canvas_anim.draw()
-            return line,
-        
-        anim = FuncAnimation(fig_anim, update_frame, frames=max_iter, 
-                           interval=50, repeat=False, blit=False)
-        
-        canvas_anim.draw()
-    
     # ========================================================================
     # TAB 3: CSV DOSYASI ANALİZİ
     # ========================================================================
@@ -1129,14 +909,6 @@ class LinearRegressionApp:
                                       font=('Arial', 13, 'bold'), bg='#4CAF50', fg='white',
                                       padx=30, pady=15, cursor='hand2', state='disabled')
         self.csv_calc_btn.pack(pady=10)
-        
-        # Gradient Descent butonu
-        self.csv_anim_btn = tk.Button(control_frame, text="🔄 Gradient Descent", 
-                                      command=self.start_csv_gradient_descent,
-                                      font=('Arial', 12, 'bold'), bg='white', fg='black',
-                                      padx=20, pady=15, cursor='hand2', relief='solid', bd=2,
-                                      state='disabled')
-        self.csv_anim_btn.pack(pady=10)
         
         # İstatistik Tablosu butonu
         self.csv_stats_btn = tk.Button(control_frame, text="📈 İstatistik Tablosu", 
@@ -1263,7 +1035,6 @@ class LinearRegressionApp:
         self.csv_y_pred = y_pred
         
         # Butonları aktif et
-        self.csv_anim_btn.config(state='normal')
         self.csv_stats_btn.config(state='normal')
         self.csv_error_btn.config(state='normal')
         
@@ -1502,114 +1273,6 @@ class LinearRegressionApp:
         canvas.get_tk_widget().pack(fill='both', expand=True, padx=20, pady=(0, 20))
         canvas.draw()
     
-    def start_csv_gradient_descent(self):
-        """CSV verilerine Gradient Descent uygula"""
-        if self.X_csv is None or self.y_csv is None:
-            return
-        
-        anim_window = Toplevel(self.root)
-        anim_window.title("🔄 Gradient Descent - CSV Verisi")
-        anim_window.geometry("1000x700")
-        anim_window.configure(bg='white')
-        
-        tk.Label(anim_window, text="🔄 GRADIENT DESCENT - CSV VERİSİ", 
-                font=('Arial', 16, 'bold'), bg='white', fg='black', pady=15).pack()
-        
-        info_frame = tk.Frame(anim_window, bg='white', relief='solid', bd=2)
-        info_frame.pack(fill='x', padx=20, pady=10)
-        
-        cost_label = tk.Label(info_frame, text="Maliyet (MSE): Başlatılıyor...", 
-                             font=('Arial', 13, 'bold'), bg='white', fg='red')
-        cost_label.pack(side='left', padx=20, pady=10)
-        
-        iteration_label = tk.Label(info_frame, text="İterasyon: 0 / 150", 
-                                   font=('Arial', 13, 'bold'), bg='white', fg='blue')
-        iteration_label.pack(side='left', padx=20, pady=10)
-        
-        params_label = tk.Label(info_frame, text="Parametreler: a=?, b=?", 
-                               font=('Arial', 13, 'bold'), bg='white', fg='darkgreen')
-        params_label.pack(side='left', padx=20, pady=10)
-        
-        fig_anim = Figure(figsize=(10, 6), facecolor='white', dpi=100)
-        ax_anim = fig_anim.add_subplot(111)
-        canvas_anim = FigureCanvasTkAgg(fig_anim, anim_window)
-        canvas_anim.get_tk_widget().pack(fill='both', expand=True, padx=20, pady=20)
-        
-        X_data = self.X_csv
-        y_data = self.y_csv
-        
-        # Normalize
-        X_mean, X_std = X_data.mean(), X_data.std()
-        y_mean, y_std = y_data.mean(), y_data.std()
-        
-        if X_std == 0: X_std = 1
-        if y_std == 0: y_std = 1
-        
-        X_norm = (X_data - X_mean) / X_std
-        y_norm = (y_data - y_mean) / y_std
-        
-        theta0 = np.random.randn() * 0.5
-        theta1 = np.random.randn() * 0.5
-        
-        learning_rate = 0.1
-        max_iter = 150
-        
-        ax_anim.scatter(X_norm, y_norm, c='blue', s=100, alpha=0.7, 
-                       edgecolors='black', linewidth=2, label='CSV Verisi', zorder=5)
-        line, = ax_anim.plot([], [], 'r-', linewidth=3, label='Regresyon', alpha=0.8)
-        
-        ax_anim.set_xlabel(f'{self.csv_x_label} (Normalize)', fontsize=13, fontweight='bold')
-        ax_anim.set_ylabel(f'{self.csv_y_label} (Normalize)', fontsize=13, fontweight='bold')
-        ax_anim.set_title(f'Gradient Descent: {self.csv_y_label} = f({self.csv_x_label})', 
-                         fontsize=15, fontweight='bold', pad=15)
-        ax_anim.legend(fontsize=12, loc='upper left')
-        ax_anim.grid(True, alpha=0.3, linestyle='--')
-        ax_anim.set_xlim(X_norm.min() - 0.5, X_norm.max() + 0.5)
-        ax_anim.set_ylim(y_norm.min() - 0.5, y_norm.max() + 0.5)
-        
-        state = {'theta0': theta0, 'theta1': theta1}
-        
-        def update_frame(frame):
-            if frame >= max_iter:
-                return line,
-            
-            y_pred = state['theta0'] + state['theta1'] * X_norm
-            mse = np.mean((y_norm - y_pred) ** 2)
-            cost_label.config(text=f"Maliyet (MSE): {mse:.6f}")
-            
-            iteration_label.config(text=f"İterasyon: {frame + 1} / {max_iter}")
-            
-            a_real = state['theta1'] * (y_std / X_std)
-            b_real = y_mean - a_real * X_mean + state['theta0'] * y_std
-            params_label.config(text=f"Parametreler: a={a_real:.4f}, b={b_real:.4f}")
-            
-            n = len(X_norm)
-            error = y_pred - y_norm
-            d_theta0 = (2.0 / n) * np.sum(error)
-            d_theta1 = (2.0 / n) * np.sum(error * X_norm)
-            
-            state['theta0'] -= learning_rate * d_theta0
-            state['theta1'] -= learning_rate * d_theta1
-            
-            y_line = state['theta0'] + state['theta1'] * X_norm
-            line.set_data(X_norm, y_line)
-            
-            if frame % 10 == 0:
-                for artist in ax_anim.lines[1:]:
-                    artist.remove()
-                
-                for i in range(len(X_norm)):
-                    ax_anim.plot([X_norm[i], X_norm[i]], [y_norm[i], y_line[i]], 
-                               'gray', linewidth=1, alpha=0.3, zorder=1)
-            
-            canvas_anim.draw()
-            return line,
-        
-        anim = FuncAnimation(fig_anim, update_frame, frames=max_iter, 
-                           interval=50, repeat=False, blit=False)
-        
-        canvas_anim.draw()
-    
     def clear_csv_data(self):
         """CSV verilerini temizle"""
         self.X_csv = None
@@ -1631,7 +1294,6 @@ class LinearRegressionApp:
         self.csv_data_info.config(text="Veri Sayısı: 0")
         
         self.csv_calc_btn.config(state='disabled')
-        self.csv_anim_btn.config(state='disabled')
         self.csv_stats_btn.config(state='disabled')
         self.csv_error_btn.config(state='disabled')
         
